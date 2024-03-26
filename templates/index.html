@@ -82,6 +82,18 @@
             border-width: 5px 10px 5px 0;
             border-color: transparent black transparent transparent;
         }
+
+        .grid-table {
+            border-collapse: collapse;
+        }
+        
+        .grid-table td {
+            width: 50px; /* 根据需要调整单元格大小 */
+            height: 50px;
+            border: 1px solid black;
+            text-align: center;
+            vertical-align: middle;
+        }
     </style>
 </head>
 <body>
@@ -165,26 +177,32 @@
             const resultsDiv = document.getElementById('results');
             resultsDiv.innerHTML = '';
         
-            // 渲染值函数
+            // 渲染值函数表格
             const valueTable = document.createElement('table');
-            valueTable.innerHTML = '<tr><th>State</th><th>Value</th></tr>';
-            for (const [stateStr, value] of Object.entries(valueFunction)) {
-                const row = valueTable.insertRow();
-                row.insertCell().textContent = stateStr;
-                row.insertCell().textContent = value.toFixed(2);
+            valueTable.classList.add('grid-table');
+            for (let row = 0; row < {{ n }}; row++) {
+                const tr = valueTable.insertRow();
+                for (let col = 0; col < {{ n }}; col++) {
+                    const state = `(${row}, ${col})`;
+                    const td = tr.insertCell();
+                    td.textContent = valueFunction[state] ? valueFunction[state].toFixed(2) : '';
+                }
             }
-            resultsDiv.appendChild(valueTable);
+            document.getElementById('value-function-grid').appendChild(valueTable);
         
-            // 渲染最优策略
+            // 渲染最优策略表格
             const policyTable = document.createElement('table');
-            policyTable.innerHTML = '<tr><th>State</th><th>Optimal Action</th></tr>';
-            for (const [stateStr, action] of Object.entries(optimalPolicy)) {
-                const row = policyTable.insertRow();
-                row.insertCell().textContent = stateStr;
-                row.insertCell().textContent = action;
+            policyTable.classList.add('grid-table');
+            for (let row = 0; row < {{ n }}; row++) {
+                const tr = policyTable.insertRow();
+                for (let col = 0; col < {{ n }}; col++) {
+                    const state = `(${row}, ${col})`;
+                    const td = tr.insertCell();
+                    td.textContent = optimalPolicy[state] || '';
+                }
             }
-            resultsDiv.appendChild(policyTable);
-
+            document.getElementById('optimal-policy-grid').appendChild(policyTable);
+        
             // 渲染带箭头的网格
             renderGridWithArrows(optimalPolicy);
         }
@@ -234,6 +252,8 @@
     <button id="evaluate-btn">Evaluate</button>
     <div id="grid-with-arrows"></div>
     <div id="results"></div>
+    <div id="value-function-grid"></div>
+    <div id="optimal-policy-grid"></div>
     
     {% endif %}
 </body>
