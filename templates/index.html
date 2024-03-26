@@ -29,6 +29,59 @@
         .obstacle {
             background-color: gray;
         }
+
+        #grid-with-arrows {
+            display: grid;
+            grid-template-columns: repeat({{ n }}, 50px); /* 根据网格大小调整 */
+            gap: 1px; /* 网格之间的间隙 */
+        }
+        
+        .cell-with-arrow {
+            width: 50px; /* 根据需要调整单元格大小 */
+            height: 50px;
+            border: 1px solid black;
+            box-sizing: border-box;
+            position: relative; /* 为箭头设置绝对定位 */
+        }
+        
+        .arrow {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-style: solid;
+        }
+        
+        .arrow.up {
+            left: 50%;
+            top: 5px;
+            margin-left: -5px;
+            border-width: 0 5px 10px 5px;
+            border-color: transparent transparent black transparent;
+        }
+        
+        .arrow.down {
+            left: 50%;
+            bottom: 5px;
+            margin-left: -5px;
+            border-width: 10px 5px 0 5px;
+            border-color: black transparent transparent transparent;
+        }
+        
+        .arrow.left {
+            left: 5px;
+            top: 50%;
+            margin-top: -5px;
+            border-width: 5px 0 5px 10px;
+            border-color: transparent transparent transparent black;
+        }
+        
+        .arrow.right {
+            right: 5px;
+            top: 50%;
+            margin-top: -5px;
+            border-width: 5px 10px 5px 0;
+            border-color: transparent black transparent transparent;
+        }
     </style>
 </head>
 <body>
@@ -131,6 +184,32 @@
                 row.insertCell().textContent = action;
             }
             resultsDiv.appendChild(policyTable);
+
+            // 渲染带箭头的网格
+            renderGridWithArrows(optimalPolicy);
+        }
+
+        function renderGridWithArrows(optimalPolicy) {
+            const gridWithArrows = document.getElementById('grid-with-arrows');
+            gridWithArrows.innerHTML = '';
+        
+            for (let row = 0; row < {{ n }}; row++) {
+                for (let col = 0; col < {{ n }}; col++) {
+                    const state = `(${row}, ${col})`;
+                    const action = optimalPolicy[state];
+        
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell-with-arrow');
+        
+                    if (action) {
+                        const arrow = document.createElement('div');
+                        arrow.classList.add('arrow', action);
+                        cell.appendChild(arrow);
+                    }
+        
+                    gridWithArrows.appendChild(cell);
+                }
+            }
         }
         
 
@@ -153,6 +232,7 @@
         {% endfor %}
     </div>
     <button id="evaluate-btn">Evaluate</button>
+    <div id="grid-with-arrows"></div>
     <div id="results"></div>
     
     {% endif %}
