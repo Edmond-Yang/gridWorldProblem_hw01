@@ -35,90 +35,94 @@ class GridWorld:
     def get_possible_actions(self, state):
         """Get the possible actions from a given state."""
         actions = []
-        row, col = state
-        if row > 0 and (row - 1, col) not in self.obstacles:
+        print(state)
+        print(type(state))
+
+        if type(state) == tuple:
+            row, col = state  # 解析字符串狀態為整數元組  # 解析字符串狀態為整數元組
+        else:
+            row, col = map(int, state[1:-1].split(', '))  # 解析字符串狀態為整數元組  # 解析字符串狀態為整數元組
+
+        if row > 0 and (row - 1, col) not in self.obstacles and (row - 1, col) != self.end:
             actions.append('up')
-        if row < self.n - 1 and (row + 1, col) not in self.obstacles:
+        if row < self.n - 1 and (row + 1, col) not in self.obstacles and (row + 1, col) != self.end:
             actions.append('down')
-        if col > 0 and (row, col - 1) not in self.obstacles:
+        if col > 0 and (row, col - 1) not in self.obstacles and (row, col - 1) != self.end:
             actions.append('left')
-        if col < self.n - 1 and (row, col + 1) not in self.obstacles:
+        if col < self.n - 1 and (row, col + 1) not in self.obstacles and (row, col + 1) != self.end:
             actions.append('right')
+
         return actions
-
+    
     def bellman_update(self, state, action, gamma=0.9):
-        row, col = map(int, state[1:-1].split(', '))  # 将字符串转换为行和列
-        value = 0
-        next_states = []
-        transition_probs = []
+        state_str = str(state)
+        if state_str == self.end:
+            self.value_function[state_str] = 0
+            return
+
+        max_value = -float('inf')
+        for action in self.get_possible_actions(state):
+            next_state = self.get_next_state(state, action)
+            if next_state is not None:
+                next_state_str = str(next_state)
+                reward = -0.1 if next_state_str in map(str, self.obstacles) else -0.1
+                value = reward + gamma * self.value_function.get(next_state_str, 0)
+                max_value = max(max_value, value)
+
+        self.value_function[state_str] = max_value
+
+    def get_next_state(self, state, action):
+        
+        if type(state) == tuple:
+            row, col = state  # 解析字符串狀態為整數元組  # 解析字符串狀態為整數元組
+        else:
+            row, col = map(int, state[1:-1].split(', '))  # 解析字符串狀態為整數元組  # 解析字符串狀態為整數元組
+
         if action == 'up':
-            next_states.append((row - 1, col))
-            transition_probs.append(1.0)
+            next_row = row - 1
+            next_col = col
         elif action == 'down':
-            next_states.append((row + 1, col))
-            transition_probs.append(1.0)
+            next_row = row + 1
+            next_col = col
         elif action == 'left':
-            next_states.append((row, col - 1))
-            transition_probs.append(1.0)
-        elif action == 'right':
-            next_states.append((row, col + 1))
-            transition_probs.append(1.0)
-
-        for i, next_state in enumerate(next_states):
-            next_state_str = str(next_state)  # 将元组转换为字符串
-            if next_state_str == self.end:
-                value += transition_probs[i] * 1  # terminal reward
-            elif next_state_str in map(str, self.obstacles):
-                value += transition_probs[i] * -0.1  # obstacle penalty
-            else:
-                value += transition_probs[i] * (gamma * self.value_function.get(next_state_str, 0) - 0.1)  # step penalty
-
-        self.value_function[state] = value
+            next_row = row
+            next_col = col - 1
+        else:  # 'right'
+            next_row = row
+            next_col = col + 1
+        
+        if (0 <= next_row < self.n) and (0 <= next_col < self.n):
+            return (next_row, next_col)
+        else:
+            return None
 
     def value_iteration(self, gamma=0.9, epsilon=1e-6):
-        """Perform value iteration to converge the value function."""
         self.initialize_random_policy()
         delta = float('inf')
         while delta > epsilon:
             delta = 0
             for state in self.policy:
-                if state != self.end:
-                    action = self.policy[state]
-                    old_value = self.value_function.get(state, 0)
-                    self.bellman_update(state, action, gamma)
-                    new_value = self.value_function[state]
-                    delta = max(delta, abs(old_value - new_value))
-                    print(f"State {state}: Value = {new_value}")  # 打印当前状态值
+                old_value = self.value_function.get(state, 0)
+                self.bellman_update(state, gamma)
+                new_value = self.value_function[state]
+                delta = max(delta, abs(old_value - new_value))
 
     def get_optimal_policy(self):
-        """Derive the optimal policy from the converged value function."""
         optimal_policy = {}
         for state_str in self.policy:
-            row, col = map(int, state_str[1:-1].split(', '))
-            state = (row, col)
+            state = tuple(map(int, state_str[1:-1].split(', ')))
             if state != self.end:
                 max_value = -float('inf')
                 best_action = None
                 for action in self.get_possible_actions(state):
-                    next_states = []
-                    transition_probs = []
-                    if action == 'up':
-                        next_states.append((row - 1, col))
-                        transition_probs.append(1.0)
-                    elif action == 'down':
-                        next_states.append((row + 1, col))
-                        transition_probs.append(1.0)
-                    elif action == 'left':
-                        next_states.append((row, col - 1))
-                        transition_probs.append(1.0)
-                    elif action == 'right':
-                        next_states.append((row, col + 1))
-                        transition_probs.append(1.0)
-
-                    value = sum(transition_probs[i] * self.value_function.get(str(next_state), 0) for i, next_state in enumerate(next_states))
-                    if value > max_value:
-                        max_value = value
-                        best_action = action
+                    next_state = self.get_next_state(state, action)
+                    if next_state is not None:
+                        next_state_str = str(next_state)
+                        reward = -0.1 if next_state_str in map(str, self.obstacles) else -0.1
+                        value = reward + self.value_function.get(next_state_str, 0)
+                        if value > max_value:
+                            max_value = value
+                            best_action = action
                 optimal_policy[state_str] = best_action
         return optimal_policy
 
