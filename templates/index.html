@@ -188,6 +188,7 @@
                     td.textContent = valueFunction[state] ? valueFunction[state].toFixed(2) : '';
                 }
             }
+            document.getElementById('value-function-grid').innerHTML = ''
             document.getElementById('value-function-grid').appendChild(valueTable);
         
             // 渲染最优策略表格
@@ -201,6 +202,7 @@
                     td.textContent = optimalPolicy[state] || '';
                 }
             }
+            document.getElementById('optimal-policy-grid').innerHTML = ''
             document.getElementById('optimal-policy-grid').appendChild(policyTable);
         
             // 渲染带箭头的网格
